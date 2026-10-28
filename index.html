@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Format Orderan Barang - StoreReport</title>
+    <!-- Library SheetJS untuk Baca & Export Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1b5e20;
+            --accent: #2e7d32;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --border: #333333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: var(--bg); color: #000; padding: 10px; font-size: 13px; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 15px; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        
+        .title-top { text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; }
+        .meta-info { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .meta-row { display: flex; align-items: center; gap: 10px; max-width: 400px; }
+        .meta-row label { font-weight: bold; width: 90px; }
+        .meta-row input { flex: 1; padding: 5px 8px; border: 1px solid #999; border-radius: 4px; font-size: 13px; }
+        
+        .note { font-style: italic; color: #b71c1c; font-size: 0.85rem; margin-bottom: 15px; font-weight: bold; }
+
+        /* Kotak Upload Database */
+        .db-card { background: #e0f2fe; padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #bae6fd; font-size: 0.85rem; }
+        .db-card input { margin-top: 5px; }
+
+        .tables-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; overflow-x: auto; margin-bottom: 20px; }
+        @media (max-width: 768px) { .tables-wrapper { grid-template-columns: 1fr; } }
+
+        .table-container { border: 1px solid var(--border); background: #fff; }
+        .table-header { background: #ffebee; color: #b71c1c; font-weight: bold; text-align: center; padding: 6px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+        th, td { border: 1px solid var(--border); padding: 5px 8px; }
+        th { background: #f0f0f0; text-align: center; }
+        .col-no { width: 40px; text-align: center; }
+        .col-qty { width: 60px; text-align: center; }
+        
+        .input-card { background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
+        .input-card h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--primary); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        
+        .form-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 3px; }
+        .form-group select, .form-group input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+
+        .btn-add { background: var(--accent); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; height: 32px; }
+        .btn-download { background: #15803d; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-download:active { transform: scale(0.98); }
+        .del-btn { background: #dc2626; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="title-top">FORMAT ORDERAN BARANG</div>
+    
+    <div class="meta-info">
+        <div class="meta-row">
+            <label>Nama Toko</label>
+            <span>:</span>
+            <input type="text" id="namaToko" value="Cibaduyut">
+        </div>
+        <div class="meta-row">
+            <label>Tanggal</label>
+            <span>:</span>
+            <input type="text" id="tanggal" value="Oktober 2026">
+        </div>
+    </div>
+
+    <div class="note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</div>
+
+    <!-- Upload File Excel Database Eksternal -->
+    <div class="db-card">
+        📁 <b>Upload File Excel Database Barang Anda:</b>
+        <input type="file" id="uploadDbExcel" accept=".xlsx, .xls" onchange="bacaFileExcelDb(event)">
+        <div style="font-size: 0.75rem; color: #555; margin-top: 3px;">(Opsional: Jika diunggah, pilihan nama barang akan otomatis mengikuti isi file Excel Anda).</div>
+    </div>
+
+    <!-- Form Tambah Barang -->
+    <div class="input-card">
+        <h3>➕ Pilih / Tambah Item Barang</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Kategori</label>
+                <select id="kategori" onchange="updateDropdownBarang()">
+                    <option value="parfum">Orderan Parfum</option>
+                    <option value="nonparfum">Orderan Non Parfum</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Pilih Nama Barang</label>
+                <select id="selectBarang">
+                    <option value="">-- Upload Excel / Pilih Kategori --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Jumlah (Qty)</label>
+                <input type="number" id="qty" placeholder="Qty...">
+            </div>
+            <button class="btn-add" onclick="tambahItem()">Tambah</button>
+        </div>
+    </div>
+
+    <!-- Dua Tabel Berdampingan -->
+    <div class="tables-wrapper">
+        <div class="table-container">
+            <div class="table-header">Orderan Parfum</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-no">No</th>
+                        <th>Nama Barang</th>
+                        <th class="col-qty">Qty</th>
+                        <th style="width: 45px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelParfum"></tbody>
+            </table>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">Orderan Non Parfum</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-no">No</th>
+                        <th>Nama Barang</th>
+                        <th class="col-qty">Qty</th>
+                        <th style="width: 45px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelNonParfum"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <button class="btn-download" onclick="exportExcel()">
+        📊 Download File Excel (Sesuai Format)
+    </button>
+</div>
+
+<script>
+    // Database Default (Cadangan jika belum upload file)
+    let dbParfum = ["Girl Way Intense", "Exotic Island", "First Flight", "Scandalia", "Vanilla"];
+    let dbNonParfum = ["PX 223", "CITRA 20", "CITRA 30", "PLASTIK LIP", "Paper Bag Kecil"];
+
+    let dataParfum = [];
+    let dataNonParfum = [];
+
+    updateDropdownBarang();
+    renderUI();
+
+    // Fungsi untuk membaca file Excel database yang di-upload pengguna
+    function bacaFileExcelDb(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, { type: 'array' });
+                let firstSheetName = workbook.SheetNames[0];
+                let worksheet = workbook.Sheets[firstSheetName];
+                let json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                let tempParfum = [];
+                let tempNonParfum = [];
+
+                // Membaca baris-baris dari excel untuk dimasukkan ke database dropdown
+                // Menyesuaikan kolom berdasarkan format Anda (Kolom B untuk Parfum, Kolom E untuk Non Parfum)
+                for (let i = 9; i < json.length; i++) {
+                    let row = json[i];
+                    if (row && row[1]) tempParfum.push(row[1]); // Kolom Nama Barang Parfum
+                    if (row && row[4]) tempNonParfum.push(row[4]); // Kolom Nama Barang Non Parfum
+                }
+
+                if (tempParfum.length > 0) dbParfum = tempParfum;
+                if (tempNonParfum.length > 0) dbNonParfum = tempNonParfum;
+
+                updateDropdownBarang();
+                alert("Database Excel berhasil dimuat ke sistem!");
+            } catch (err) {
+                alert("Gagal membaca file Excel. Pastikan formatnya benar.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function updateDropdownBarang() {
+        let kategori = document.getElementById('kategori').value;
+        let select = document.getElementById('selectBarang');
+        let list = kategori === 'parfum' ? dbParfum : dbNonParfum;
+        
+        let html = '';
+        list.forEach(nama => {
+            html += `<option value="${nama}">${nama}</option>`;
+        });
+        select.innerHTML = html;
+    }
+
+    function tambahItem() {
+        let kategori = document.getElementById('kategori').value;
+        let nama = document.getElementById('selectBarang').value;
+        let qty = document.getElementById('qty').value;
+
+        if(!nama || !qty) {
+            alert('Pilih nama barang dan isi Qty terlebih dahulu!');
+            return;
+        }
+
+        if(kategori === 'parfum') {
+            dataParfum.push({ nama, qty });
+        } else {
+            dataNonParfum.push({ nama, qty });
+        }
+
+        document.getElementById('qty').value = '';
+        renderUI();
+    }
+
+    function hapusItem(kategori, index) {
+        if(kategori === 'parfum') {
+            dataParfum.splice(index, 1);
+        } else {
+            dataNonParfum.splice(index, 1);
+        }
+        renderUI();
+    }
+
+    function renderUI() {
+        let htmlP = '';
+        if(dataParfum.length === 0) {
+            htmlP = `<tr><td colspan="4" style="text-align:center; color:#777;">Belum ada item</td></tr>`;
+        } else {
+            dataParfum.forEach((item, idx) => {
+                htmlP += `<tr>
+                    <td class="col-no">${idx + 1}</td>
+                    <td>${item.nama}</td>
+                    <td class="col-qty">${item.qty}</td>
+                    <td style="text-align:center;"><button class="del-btn" onclick="hapusItem('parfum', ${idx})">Hapus</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('tabelParfum').innerHTML = htmlP;
+
+        let htmlNP = '';
+        if(dataNonParfum.length === 0) {
+            htmlNP = `<tr><td colspan="4" style="text-align:center; color:#777;">Belum ada item</td></tr>`;
+        } else {
+            dataNonParfum.forEach((item, idx) => {
+                htmlNP += `<tr>
+                    <td class="col-no">${idx + 1}</td>
+                    <td>${item.nama}</td>
+                    <td class="col-qty">${item.qty}</td>
+                    <td style="text-align:center;"><button class="del-btn" onclick="hapusItem('nonparfum', ${idx})">Hapus</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('tabelNonParfum').innerHTML = htmlNP;
+    }
+
+    function exportExcel() {
+        let toko = document.getElementById('namaToko').value || 'Toko';
+        let tgl = document.getElementById('tanggal').value || '-';
+
+        let aoa = [
+            ["FORMAT ORDERAN BARANG"],
+            [""],
+            ["Nama Toko", ": " + toko],
+            ["Tanggal", ": " + tgl],
+            [""],
+            ["Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang."],
+            [""],
+            ["Orderan Parfum", "", "", "Orderan Non Parfum", "", ""],
+            ["No", "Nama Barang", "Qty", "No", "Nama Barang", "Qty"]
+        ];
+
+        let maxRow = Math.max(dataParfum.length, dataNonParfum.length);
+        for (let i = 0; i < maxRow; i++) {
+            let p = dataParfum[i] || { nama: "", qty: "" };
+            let np = dataNonParfum[i] || { nama: "", qty: "" };
+            
+            aoa.push([
+                p.nama !== "" ? (i + 1) : "",
+                p.nama,
+                p.qty,
+                np.nama !== "" ? (i + 1) : "",
+                np.nama,
+                np.qty
+            ]);
+        }
+
+        let ws = XLSX.utils.aoa_to_sheet(aoa);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Orderan");
+
+        XLSX.writeFile(wb, `orderan_${toko}_(${tgl}) - Disimpan.xlsx`);
+    }
+</script>
+
+</body>
+</html>
