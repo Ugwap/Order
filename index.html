@@ -400,7 +400,7 @@
 
         for (let i = 0; i < totalBaris; i++) {
             let p = dataParfum[i] || { nama: "", qty: "" };
-            let np = dataNonPartum || dataNonParfum[i] || { nama: "", qty: "" };
+            let np = dataNonParfum[i] || { nama: "", qty: "" };
             
             aoa.push([
                 p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
@@ -415,7 +415,6 @@
 
         let ws = XLSX.utils.aoa_to_sheet(aoa);
 
-        // Mengaktifkan Gridlines standar SheetJS agar garis bantu Excel langsung tampil
         if(!ws['!views']) ws['!views'] = [{ showGridLines: true }];
 
         ws['!cols'] = [
