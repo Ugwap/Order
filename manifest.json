@@ -1,0 +1,16 @@
+{
+  "name": "StoreReport Hub",
+  "short_name": "StoreReport",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1b5e20",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3281/3281289.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
