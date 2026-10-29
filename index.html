@@ -393,13 +393,16 @@
             let wb = XLSX.read(arrayBuffer, { type: 'array' });
             let ws = wb.Sheets[wb.SheetNames[0]];
 
-            // Sinkronisasi Nama Toko (B3) dan Tanggal (B4) dari web
-            ws['B3'] = { t: 's', v: ": " + toko };
-            ws['B4'] = { t: 's', v: ": " + tgl };
+            // Sinkronisasi Nama Toko (B3) dan Tanggal (B4)
+            if (!ws['B3']) ws['B3'] = { t: 's' };
+            ws['B3'].v = ": " + toko;
+
+            if (!ws['B4']) ws['B4'] = { t: 's' };
+            ws['B4'].v = ": " + tgl;
 
             let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
 
-            // Mengisi data tabel mulai dari baris ke-12 (Indeks baris 11) ke bawah
+            // Mengisi data tabel mulai dari baris ke-12 (Indeks baris 11) TANPA MERUSAK BORDER TEMPLATE
             for (let i = 0; i < totalBaris; i++) {
                 let r = 11 + i; // Baris Excel ke-12
                 let p = dataParfum[i] || { nama: "", qty: "" };
@@ -409,17 +412,15 @@
                 let noNP = (i < 35 || np.nama !== "") ? (i + 1) : "";
 
                 // Kolom Parfum (A = No, B = Nama Barang, C = Qty)
-                ws[XLSX.utils.encode_cell({ c: 0, r: r })] = { t: 's', v: String(noP) };
-                ws[XLSX.utils.encode_cell({ c: 1, r: r })] = { t: 's', v: p.nama || "" };
-                ws[XLSX.utils.encode_cell({ c: 2, r: r })] = { t: 's', v: p.qty ? String(p.qty) : "" };
+                updateCell(ws, 0, r, String(noP));
+                updateCell(ws, 1, r, p.nama || "");
+                updateCell(ws, 2, r, p.qty ? String(p.qty) : "");
 
                 // Kolom Non Parfum (E = No, F = Nama Barang, G = Qty)
-                ws[XLSX.utils.encode_cell({ c: 4, r: r })] = { t: 's', v: String(noNP) };
-                ws[XLSX.utils.encode_cell({ c: 5, r: r })] = { t: 's', v: np.nama || "" };
-                ws[XLSX.utils.encode_cell({ c: 6, r: r })] = { t: 's', v: np.qty ? String(np.qty) : "" };
+                updateCell(ws, 4, r, String(noNP));
+                updateCell(ws, 5, r, np.nama || "");
+                updateCell(ws, 6, r, np.qty ? String(np.qty) : "");
             }
-
-            ws['!ref'] = `A1:G${11 + totalBaris}`;
 
             XLSX.writeFile(wb, `orderan_${toko}_(${tgl}).xlsx`);
 
@@ -427,6 +428,18 @@
             console.error(err);
             alert("Gagal memuat template.xlsx. Pastikan file template.xlsx sudah di-upload ke satu folder dengan index.html!");
         }
+    }
+
+    // Fungsi pembantu untuk mengisi nilai teks sel tanpa menghapus border atau styling template asli
+    function updateCell(ws, col, row, value) {
+        let cellRef = XLSX.utils.encode_cell({ c: col, r: row });
+        if (!ws[cellRef]) {
+            ws[cellRef] = { t: 's', v: value };
+        } else {
+            ws[cellRef].v = value;
+            ws[cellRef].t = 's';
+        }
+    }
     }
 </script>
 
