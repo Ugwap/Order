@@ -389,11 +389,12 @@
                 <meta charset="UTF-8">
                 <style>
                     table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11pt; }
-                    /* Style standar tanpa border untuk bagian atas */
-                    td { padding: 4px 6px; vertical-align: middle; border: none; }
                     
-                    /* Style khusus border tabel data di bawah */
-                    .tbl-border { border: 1px solid #000000 !important; }
+                    /* Bagian atas tanpa border */
+                    .no-border { border: none !important; padding: 4px 6px; vertical-align: middle; }
+                    
+                    /* Bagian tabel lengkap berborder di semua kolom (No, Nama Barang, Qty) */
+                    .tbl-border { border: 1px solid #000000 !important; padding: 4px 6px; vertical-align: middle; }
                     
                     .title { font-size: 14pt; font-weight: bold; text-align: center; }
                     .info { font-weight: bold; }
@@ -402,47 +403,48 @@
                     .tbl-head { background-color: #f0f0f0; text-align: center; font-weight: bold; }
                     .c-no { text-align: center; width: 40px; }
                     .c-qty { text-align: center; width: 60px; }
-                    .c-space { width: 20px; background-color: #ffffff; }
+                    .c-space { width: 20px; border: none !important; background-color: #ffffff; }
                 </style>
             </head>
             <body>
                 <table>
                     <!-- Bagian Atas (Polos Tanpa Border) -->
                     <tr>
-                        <td colspan="3" class="title">FORMAT ORDERAN BARANG</td>
+                        <td colspan="3" class="no-border title">FORMAT ORDERAN BARANG</td>
                         <td class="c-space"></td>
-                        <td colspan="3" class="title"></td>
+                        <td colspan="3" class="no-border title"></td>
                     </tr>
-                    <tr><td colspan="7"></td></tr>
+                    <tr><td colspan="7" class="no-border"></td></tr>
                     <tr>
-                        <td class="info">Nama Toko</td>
-                        <td colspan="2" class="info">: ${toko}</td>
+                        <td class="no-border info">Nama Toko</td>
+                        <td colspan="2" class="no-border info">: ${toko}</td>
                         <td class="c-space"></td>
-                        <td colspan="3"></td>
+                        <td colspan="3" class="no-border"></td>
                     </tr>
                     <tr>
-                        <td class="info">Tanggal</td>
-                        <td colspan="2" class="info">: ${tgl}</td>
+                        <td class="no-border info">Tanggal</td>
+                        <td colspan="2" class="no-border info">: ${tgl}</td>
                         <td class="c-space"></td>
-                        <td colspan="3"></td>
+                        <td colspan="3" class="no-border"></td>
                     </tr>
-                    <tr><td colspan="7"></td></tr>
+                    <tr><td colspan="7" class="no-border"></td></tr>
                     <tr>
-                        <td colspan="7" class="note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</td>
+                        <td colspan="7" class="no-border note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</td>
                     </tr>
-                    <tr><td colspan="7"></td></tr>
+                    <tr><td colspan="7" class="no-border"></td></tr>
 
-                    <!-- Bagian Tabel Berborder (Mulai dari Judul Tabel & Header) -->
+                    <!-- Judul Tabel Utama -->
                     <tr>
                         <td colspan="3" class="tbl-title tbl-border">Orderan Parfum</td>
-                        <td class="c-space" style="border:none;"></td>
+                        <td class="c-space"></td>
                         <td colspan="3" class="tbl-title tbl-border">Orderan Non Parfum</td>
                     </tr>
+                    <!-- Header Kolom (No, Nama Barang, Qty) -->
                     <tr>
                         <td class="tbl-head tbl-border">No</td>
                         <td class="tbl-head tbl-border" style="width: 220px;">Nama Barang</td>
                         <td class="tbl-head tbl-border">Qty</td>
-                        <td class="c-space" style="border:none;"></td>
+                        <td class="c-space"></td>
                         <td class="tbl-head tbl-border">No</td>
                         <td class="tbl-head tbl-border" style="width: 220px;">Nama Barang</td>
                         <td class="tbl-head tbl-border">Qty</td>
@@ -461,7 +463,7 @@
                     <td class="c-no tbl-border">${noP}</td>
                     <td class="tbl-border">${p.nama || ""}</td>
                     <td class="c-qty tbl-border">${p.qty || ""}</td>
-                    <td class="c-space" style="border:none;"></td>
+                    <td class="c-space"></td>
                     <td class="c-no tbl-border">${noNP}</td>
                     <td class="tbl-border">${np.nama || ""}</td>
                     <td class="c-qty tbl-border">${np.qty || ""}</td>
