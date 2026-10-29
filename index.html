@@ -377,10 +377,11 @@
         document.getElementById('tabelNonParfum').innerHTML = htmlNP;
     }
 
-    function exportExcel() {
+   function exportExcel() {
         let toko = document.getElementById('namaToko').value || 'Toko';
         let tgl = document.getElementById('tanggal').value || '-';
 
+        // Menyusun baris agar posisinya pas di kolom A-C dan E-G (Kolom D kosong sebagai spasi)
         let aoa = [
             ["", "FORMAT ORDERAN BARANG", "", "", "", "", ""],
             ["", "", "", "", "", "", ""],
@@ -400,26 +401,27 @@
             let np = dataNonParfum[i] || { nama: "", qty: "" };
             
             aoa.push([
-                p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 30 ? i + 1 : ""),
-                p.nama,
-                p.qty,
-                "",
-                np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 30 ? i + 1 : ""),
-                np.nama,
-                np.qty
+                p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 30 ? i + 1 : ""), // Kolom A (No Parfum)
+                p.nama,                                                                  // Kolom B (Nama Parfum)
+                p.qty,                                                                   // Kolom C (Qty Parfum)
+                "",                                                                      // Kolom D (SPASI KOSONG PEMISAH)
+                np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 30 ? i + 1 : ""), // Kolom E (No Non Parfum)
+                np.nama,                                                                 // Kolom F (Nama Non Parfum)
+                np.qty                                                                   // Kolom G (Qty Non Parfum)
             ]);
         }
 
         let ws = XLSX.utils.aoa_to_sheet(aoa);
 
+        // Mengatur lebar kolom agar pas, rapi, dan terpisah dengan sempurna
         ws['!cols'] = [
-            { wch: 5 },  
-            { wch: 32 }, 
-            { wch: 8 },  
-            { wch: 4 },  
-            { wch: 5 },  
-            { wch: 32 }, 
-            { wch: 8 }   
+            { wch: 5 },  // Kolom A: No Parfum
+            { wch: 32 }, // Kolom B: Nama Barang Parfum
+            { wch: 8 },  // Kolom C: Qty Parfum
+            { wch: 4 },  // Kolom D: Jarak Spasi Kosong Pemisah
+            { wch: 5 },  // Kolom E: No Non Parfum
+            { wch: 32 }, // Kolom F: Nama Barang Non Parfum
+            { wch: 8 }   // Kolom G: Qty Non Parfum
         ];
 
         let wb = XLSX.utils.book_new();
