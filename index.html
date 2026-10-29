@@ -445,6 +445,73 @@
            <Borders>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    function exportExcel() {
+        let toko = document.getElementById('namaToko').value || 'Toko';
+        let tgl = document.getElementById('tanggal').value || '-';
+
+        let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
+
+        let xmlContent = `
+        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+         xmlns:o="urn:schemas-microsoft-com:office:office"
+         xmlns:x="urn:schemas-microsoft-com:office:excel"
+         xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+         xmlns:html="http://www.w3.org/TR/REC-html40">
+         <Styles>
+          <Style ss:ID="Default" ss:Name="Normal">
+           <Alignment ss:Vertical="Bottom"/>
+           <Borders/>
+           <Font ss:FontName="Arial" ss:Size="11"/>
+           <Interior/>
+           <NumberFormat/>
+           <Protection/>
+          </Style>
+          <Style ss:ID="HeaderTitle">
+           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+           <Font ss:FontName="Arial" ss:Size="14" ss:Bold="1"/>
+          </Style>
+          <Style ss:ID="SubInfo">
+           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1"/>
+          </Style>
+          <Style ss:ID="NoteText">
+           <Font ss:FontName="Arial" ss:Size="10" ss:Italic="1" ss:Color="#B71C1C"/>
+          </Style>
+          <Style ss:ID="TableTitle">
+           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1" ss:Color="#B71C1C"/>
+           <Interior ss:Color="#FFEBEE" ss:Pattern="Solid"/>
+           <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+           </Borders>
+          </Style>
+          <Style ss:ID="ThCol">
+           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1"/>
+           <Interior ss:Color="#F0F0F0" ss:Pattern="Solid"/>
+           <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+           </Borders>
+          </Style>
+          <Style ss:ID="CellData">
+           <Alignment ss:Vertical="Center"/>
+           <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+           </Borders>
+          </Style>
+          <Style ss:ID="CellCenter">
+           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+           <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
            </Borders>
@@ -497,18 +564,23 @@
             let p = dataParfum[i] || { nama: "", qty: "" };
             let np = dataNonParfum[i] || { nama: "", qty: "" };
             
-            let noP = p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 35 ? i + 1 : "");
-            let noNP = np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 35 ? i + 1 : "");
+            let noP = (i < 35 || p.nama !== "") ? (i + 1) : "";
+            let noNP = (i < 35 || np.nama !== "") ? (i + 1) : "";
+
+            let valP = p.nama ? escapeXml(p.nama) : "";
+            let valQtyP = p.qty ? p.qty : "";
+            let valNP = np.nama ? escapeXml(np.nama) : "";
+            let valQtyNP = np.qty ? np.qty : "";
 
             xmlContent += `
            <Row>
             <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${noP}</Data></Cell>
-            <Cell ss:StyleID="CellData"><Data ss:Type="String">${escapeXml(p.nama)}</Data></Cell>
-            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${p.qty}</Data></Cell>
+            <Cell ss:StyleID="CellData"><Data ss:Type="String">${valP}</Data></Cell>
+            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${valQtyP}</Data></Cell>
             <Cell></Cell>
             <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${noNP}</Data></Cell>
-            <Cell ss:StyleID="CellData"><Data ss:Type="String">${escapeXml(np.nama)}</Data></Cell>
-            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${np.qty}</Data></Cell>
+            <Cell ss:StyleID="CellData"><Data ss:Type="String">${valNP}</Data></Cell>
+            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${valQtyNP}</Data></Cell>
            </Row>
             `;
         }
@@ -529,18 +601,6 @@
         document.body.removeChild(a);
     }
 
-    function escapeXml(unsafe) {
-        if (!unsafe) return "";
-        return String(unsafe).replace(/[<>&'"]/g, function (c) {
-            switch (c) {
-                case '<': return '&lt;';
-                case '>': return '&gt;';
-                case '&': return '&amp;';
-                case '\'': return '&apos;';
-                case '"': return '&quot;';
-            }
-        });
-    }
 
 </script>
 
