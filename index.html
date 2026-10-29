@@ -412,41 +412,41 @@
 
         let ws = XLSX.utils.aoa_to_sheet(aoa);
 
-        // Mengatur garis kotak-kotak (border) tipis pada tabel
-        let thinBorder = {
+        // Mengaktifkan gridlines dan mendefinisikan border hitam tipis
+        if(!ws['!views']) ws['!views'] = [{ showGridLines: true }];
+
+        let borderStyle = {
             top: { style: "thin", color: { rgb: "000000" } },
             bottom: { style: "thin", color: { rgb: "000000" } },
             left: { style: "thin", color: { rgb: "000000" } },
             right: { style: "thin", color: { rgb: "000000" } }
         };
 
-        // Menerapkan border ke area tabel data (mulai baris ke-10 sampai akhir baris)
-        let range = XLSX.utils.decode_range(ws['!ref']);
-        for (let R = 9; R <= range.e.r; ++R) {
-            // Untuk tabel Parfum (Kolom A, B, C / Indeks 0, 1, 2)
+        // Memasang border ke setiap sel tabel dari baris header (indeks 8) ke bawah
+        let range = XLSX.utils.decode_range(ws['!ref'] || "A1:G40");
+        for (let R = 8; R <= range.e.r; ++R) {
+            // Kolom Parfum (A, B, C / Indeks 0, 1, 2)
             for (let C = 0; C <= 2; ++C) {
-                let cell_address = { c: C, r: R };
-                let cell_ref = XLSX.utils.encode_cell(cell_address);
-                if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' };
-                if (!ws[cell_ref].s) ws[cell_ref].s = {};
-                ws[cell_ref].s.border = thinBorder;
+                let cellRef = XLSX.utils.encode_cell({c: C, r: R});
+                if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
+                if (!ws[cellRef].s) ws[cellRef].s = {};
+                ws[cellRef].s.border = borderStyle;
             }
-            // Untuk tabel Non Parfum (Kolom E, F, G / Indeks 4, 5, 6)
+            // Kolom Non Parfum (E, F, G / Indeks 4, 5, 6)
             for (let C = 4; C <= 6; ++C) {
-                let cell_address = { c: C, r: R };
-                let cell_ref = XLSX.utils.encode_cell(cell_address);
-                if (!ws[cell_ref]) ws[cell_ref] = { t: 's', v: '' };
-                if (!ws[cell_ref].s) ws[cell_ref].s = {};
-                ws[cell_ref].s.border = thinBorder;
+                let cellRef = XLSX.utils.encode_cell({c: C, r: R});
+                if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
+                if (!ws[cellRef].s) ws[cellRef].s = {};
+                ws[cellRef].s.border = borderStyle;
             }
         }
 
-        // Mengatur lebar kolom agar pas dan rapi
+        // Mengatur lebar kolom agar pas dan rapi berdampingan
         ws['!cols'] = [
             { wch: 5 },  // Kolom A: No Parfum
             { wch: 32 }, // Kolom B: Nama Barang Parfum
             { wch: 8 },  // Kolom C: Qty Parfum
-            { wch: 4 },  // Kolom D: Jarak Spasi Kosong
+            { wch: 4 },  // Kolom D: Jarak Spasi Kosong Pemisah
             { wch: 5 },  // Kolom E: No Non Parfum
             { wch: 32 }, // Kolom F: Nama Barang Non Parfum
             { wch: 8 }   // Kolom G: Qty Non Parfum
