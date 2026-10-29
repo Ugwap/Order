@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoreReport Hub</title>
     <link rel="manifest" href="manifest.json">
-    <!-- Library SheetJS -->
+    <!-- Library SheetJS untuk Export Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Library Supabase Client -->
+    <!-- Library Resmi Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -110,10 +110,12 @@
 
     <div class="note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</div>
 
+    <!-- Status Koneksi Database Online -->
     <div class="db-status" id="dbStatusText">
         ☁️ Menghubungkan ke Database Online...
     </div>
 
+    <!-- Form Tambah Barang -->
     <div class="input-card">
         <h3>➕ Cari & Tambah Item Barang</h3>
         <div class="form-grid">
@@ -139,6 +141,7 @@
         </div>
     </div>
 
+    <!-- Dua Tabel Berdampingan -->
     <div class="tables-wrapper">
         <div class="table-container">
             <div class="table-header">Orderan Parfum</div>
@@ -182,7 +185,7 @@
 </div>
 
 <script>
-    // --- MASUKKAN KUNCI SUPABASE ANDA DI SINI ---
+    // --- KONFIGURASI SUPABASE ANDA ---
     const SUPABASE_URL = 'https://vnvxknlpwjquzbmrzaju.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_fyxNidWq9fkGExXJNzad_w_V-_-XV-b'; 
     
@@ -377,83 +380,53 @@
         document.getElementById('tabelNonParfum').innerHTML = htmlNP;
     }
 
-    // Fungsi Export Excel dengan format XML Spreadsheet murni (Aman, Tanpa Error, Border Kotak Full)
-    function exportExcel() {
+    // --- Fungsi Export Excel Berbasis Template Eksternal ---
+    async function exportExcel() {
         let toko = document.getElementById('namaToko').value || 'Toko';
         let tgl = document.getElementById('tanggal').value || '-';
 
-        let aoa = [
-            ["", "FORMAT ORDERAN BARANG", "", "", "", "", ""],
-            ["", "", "", "", "", "", ""],
-            ["Nama Toko", ": " + toko, "", "", "", "", ""],
-            ["Tanggal", ": " + tgl, "", "", "", "", ""],
-            ["", "", "", "", "", "", ""],
-            ["Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang."],
-            ["", "", "", "", "", "", ""],
-            ["Orderan Parfum", "", "", "", "Orderan Non Parfum", "", ""],
-            ["No", "Nama Barang", "Qty", "", "No", "Nama Barang", "Qty"]
-        ];
-
-        let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
-
-        for (let i = 0; i < totalBaris; i++) {
-            let p = dataParfum[i] || { nama: "", qty: "" };
-            let np = dataNonParfum[i] || { nama: "", qty: "" };
+        try {
+            let response = await fetch('template.xlsx');
+            if (!response.ok) throw new Error("File template.xlsx tidak ditemukan di folder server.");
             
-            aoa.push([
-                p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
-                p.nama,
-                p.qty,
-                "",
-                np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
-                np.nama,
-                np.qty
-            ]);
-        }
+            let arrayBuffer = await response.arrayBuffer();
+            let wb = XLSX.read(arrayBuffer, { type: 'array' });
+            let ws = wb.Sheets[wb.SheetNames[0]];
 
-        let ws = XLSX.utils.aoa_to_sheet(aoa);
+            // Sinkronisasi Nama Toko (B3) dan Tanggal (B4) dari web
+            ws['B3'] = { t: 's', v: ": " + toko };
+            ws['B4'] = { t: 's', v: ": " + tgl };
 
-        // Memaksa file xlsx agar memunculkan garis gridlines bawaan Excel/WPS secara penuh
-        if(!ws['!views']) ws['!views'] = [{ showGridLines: true }];
+            let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
 
-        let borderStyle = {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } }
-        };
+            // Mengisi data tabel mulai dari baris ke-12 (Indeks baris 11) ke bawah
+            for (let i = 0; i < totalBaris; i++) {
+                let r = 11 + i; // Baris Excel ke-12
+                let p = dataParfum[i] || { nama: "", qty: "" };
+                let np = dataNonParfum[i] || { nama: "", qty: "" };
+                
+                let noP = (i < 35 || p.nama !== "") ? (i + 1) : "";
+                let noNP = (i < 35 || np.nama !== "") ? (i + 1) : "";
 
-        // Menerapkan border secara paksa ke setiap sel tabel agar terbaca oleh Excel & WPS
-        let range = XLSX.utils.decode_range(ws['!ref'] || "A1:G45");
-        for (let R = 7; R <= range.e.r; ++R) {
-            for (let C = 0; C <= 2; ++C) {
-                let cellRef = XLSX.utils.encode_cell({c: C, r: R});
-                if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
-                if (!ws[cellRef].s) ws[cellRef].s = {};
-                ws[cellRef].s.border = borderStyle;
+                // Kolom Parfum (A = No, B = Nama Barang, C = Qty)
+                ws[XLSX.utils.encode_cell({ c: 0, r: r })] = { t: 's', v: String(noP) };
+                ws[XLSX.utils.encode_cell({ c: 1, r: r })] = { t: 's', v: p.nama || "" };
+                ws[XLSX.utils.encode_cell({ c: 2, r: r })] = { t: 's', v: p.qty ? String(p.qty) : "" };
+
+                // Kolom Non Parfum (E = No, F = Nama Barang, G = Qty)
+                ws[XLSX.utils.encode_cell({ c: 4, r: r })] = { t: 's', v: String(noNP) };
+                ws[XLSX.utils.encode_cell({ c: 5, r: r })] = { t: 's', v: np.nama || "" };
+                ws[XLSX.utils.encode_cell({ c: 6, r: r })] = { t: 's', v: np.qty ? String(np.qty) : "" };
             }
-            for (let C = 4; C <= 6; ++C) {
-                let cellRef = XLSX.utils.encode_cell({c: C, r: R});
-                if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
-                if (!ws[cellRef].s) ws[cellRef].s = {};
-                ws[cellRef].s.border = borderStyle;
-            }
+
+            ws['!ref'] = `A1:G${11 + totalBaris}`;
+
+            XLSX.writeFile(wb, `orderan_${toko}_(${tgl}).xlsx`);
+
+        } catch (err) {
+            console.error(err);
+            alert("Gagal memuat template.xlsx. Pastikan file template.xlsx sudah di-upload ke satu folder dengan index.html!");
         }
-
-        ws['!cols'] = [
-            { wch: 5 },  
-            { wch: 32 }, 
-            { wch: 8 },  
-            { wch: 4 },  
-            { wch: 5 },  
-            { wch: 32 }, 
-            { wch: 8 }   
-        ];
-
-        let wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Orderan");
-
-        XLSX.writeFile(wb, `orderan_${toko}_(${tgl}).xlsx`);
     }
 </script>
 
