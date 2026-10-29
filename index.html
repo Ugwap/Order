@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoreReport Hub</title>
     <link rel="manifest" href="manifest.json">
-    <!-- Library SheetJS untuk Export Excel -->
+    <!-- Library SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Library Resmi Supabase Client -->
+    <!-- Library Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -110,12 +110,10 @@
 
     <div class="note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</div>
 
-    <!-- Status Koneksi Database Online -->
     <div class="db-status" id="dbStatusText">
         ☁️ Menghubungkan ke Database Online...
     </div>
 
-    <!-- Form Tambah Barang -->
     <div class="input-card">
         <h3>➕ Cari & Tambah Item Barang</h3>
         <div class="form-grid">
@@ -141,7 +139,6 @@
         </div>
     </div>
 
-    <!-- Dua Tabel Berdampingan -->
     <div class="tables-wrapper">
         <div class="table-container">
             <div class="table-header">Orderan Parfum</div>
@@ -185,7 +182,7 @@
 </div>
 
 <script>
-    // --- KONFIGURASI SUPABASE ANDA ---
+    // --- MASUKKAN KUNCI SUPABASE ANDA DI SINI ---
     const SUPABASE_URL = 'https://vnvxknlpwjquzbmrzaju.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_fyxNidWq9fkGExXJNzad_w_V-_-XV-b'; 
     
@@ -380,57 +377,100 @@
         document.getElementById('tabelNonParfum').innerHTML = htmlNP;
     }
 
+    // Fungsi Export Excel berbasis HTML Tabel murni dengan Border CSS Otomatis
     function exportExcel() {
         let toko = document.getElementById('namaToko').value || 'Toko';
         let tgl = document.getElementById('tanggal').value || '-';
-
-        let aoa = [
-            ["", "FORMAT ORDERAN BARANG", "", "", "", "", ""],
-            ["", "", "", "", "", "", ""],
-            ["Nama Toko", ": " + toko, "", "", "", "", ""],
-            ["Tanggal", ": " + tgl, "", "", "", "", ""],
-            ["", "", "", "", "", "", ""],
-            ["Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang."],
-            ["", "", "", "", "", "", ""],
-            ["Orderan Parfum", "", "", "", "Orderan Non Parfum", "", ""],
-            ["No", "Nama Barang", "Qty", "", "No", "Nama Barang", "Qty"]
-        ];
-
         let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
+
+        let html = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/1999/xhtml">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 11pt; }
+                    th, td { border: 1px solid #000000 !important; padding: 4px 6px; vertical-align: middle; }
+                    .title { font-size: 14pt; font-weight: bold; text-align: center; border: none !important; }
+                    .info { font-weight: bold; border: none !important; }
+                    .note { font-style: italic; color: #b71c1c; border: none !important; }
+                    .tbl-title { background-color: #ffebee; color: #b71c1c; font-weight: bold; text-align: center; }
+                    .tbl-head { background-color: #f0f0f0; text-align: center; font-weight: bold; }
+                    .c-no { text-align: center; width: 40px; }
+                    .c-qty { text-align: center; width: 60px; }
+                    .c-space { border: none !important; width: 20px; background-color: #ffffff; }
+                </style>
+            </head>
+            <body>
+                <table>
+                    <tr>
+                        <td colspan="3" class="title">FORMAT ORDERAN BARANG</td>
+                        <td class="c-space"></td>
+                        <td colspan="3" class="title"></td>
+                    </tr>
+                    <tr><td colspan="7" style="border:none !important;"></td></tr>
+                    <tr>
+                        <td class="info">Nama Toko</td>
+                        <td colspan="2" class="info">: ${toko}</td>
+                        <td class="c-space"></td>
+                        <td colspan="3"></td>
+                    </tr>
+                    <tr>
+                        <td class="info">Tanggal</td>
+                        <td colspan="2" class="info">: ${tgl}</td>
+                        <td class="c-space"></td>
+                        <td colspan="3"></td>
+                    </tr>
+                    <tr><td colspan="7" style="border:none !important;"></td></tr>
+                    <tr>
+                        <td colspan="7" class="note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</td>
+                    </tr>
+                    <tr><td colspan="7" style="border:none !important;"></td></tr>
+                    <tr>
+                        <td colspan="3" class="tbl-title">Orderan Parfum</td>
+                        <td class="c-space"></td>
+                        <td colspan="3" class="tbl-title">Orderan Non Parfum</td>
+                    </tr>
+                    <tr>
+                        <td class="tbl-head">No</td>
+                        <td class="tbl-head" style="width: 220px;">Nama Barang</td>
+                        <td class="tbl-head">Qty</td>
+                        <td class="c-space"></td>
+                        <td class="tbl-head">No</td>
+                        <td class="tbl-head" style="width: 220px;">Nama Barang</td>
+                        <td class="tbl-head">Qty</td>
+                    </tr>
+        `;
 
         for (let i = 0; i < totalBaris; i++) {
             let p = dataParfum[i] || { nama: "", qty: "" };
             let np = dataNonParfum[i] || { nama: "", qty: "" };
             
-            aoa.push([
-                p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
-                p.nama,
-                p.qty,
-                "",
-                np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
-                np.nama,
-                np.qty
-            ]);
+            let noP = (i < 35 || p.nama !== "") ? (i + 1) : "";
+            let noNP = (i < 35 || np.nama !== "") ? (i + 1) : "";
+
+            html += `
+                <tr>
+                    <td class="c-no">${noP}</td>
+                    <td>${p.nama || ""}</td>
+                    <td class="c-qty">${p.qty || ""}</td>
+                    <td class="c-space"></td>
+                    <td class="c-no">${noNP}</td>
+                    <td>${np.nama || ""}</td>
+                    <td class="c-qty">${np.qty || ""}</td>
+                </tr>
+            `;
         }
 
-        let ws = XLSX.utils.aoa_to_sheet(aoa);
+        html += `</table></body></html>`;
 
-        if(!ws['!views']) ws['!views'] = [{ showGridLines: true }];
-
-        ws['!cols'] = [
-            { wch: 5 },  
-            { wch: 32 }, 
-            { wch: 8 },  
-            { wch: 4 },  
-            { wch: 5 },  
-            { wch: 32 }, 
-            { wch: 8 }   
-        ];
-
-        let wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Orderan");
-
-        XLSX.writeFile(wb, `orderan_${toko}_(${tgl}).xlsx`);
+        let blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `orderan_${toko}_(${tgl}).xls`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 </script>
 
