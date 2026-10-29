@@ -380,7 +380,7 @@
         document.getElementById('tabelNonParfum').innerHTML = htmlNP;
     }
 
-    // --- Fungsi Export Excel Berbasis Template Eksternal ---
+    // --- Fungsi Export Excel Menggunakan template.xlsx ---
     async function exportExcel() {
         let toko = document.getElementById('namaToko').value || 'Toko';
         let tgl = document.getElementById('tanggal').value || '-';
@@ -439,7 +439,6 @@
             ws[cellRef].v = value;
             ws[cellRef].t = 's';
         }
-    }
     }
 </script>
 
