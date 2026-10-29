@@ -110,10 +110,12 @@
 
     <div class="note">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</div>
 
+    <!-- Status Koneksi Database Online -->
     <div class="db-status" id="dbStatusText">
         ☁️ Menghubungkan ke Database Online...
     </div>
 
+    <!-- Form Tambah Barang -->
     <div class="input-card">
         <h3>➕ Cari & Tambah Item Barang</h3>
         <div class="form-grid">
@@ -139,6 +141,7 @@
         </div>
     </div>
 
+    <!-- Dua Tabel Berdampingan -->
     <div class="tables-wrapper">
         <div class="table-container">
             <div class="table-header">Orderan Parfum</div>
@@ -182,7 +185,7 @@
 </div>
 
 <script>
-    // --- MASUKKAN URL & ANON KEY SUPABASE ANDA DI SINI ---
+    // --- KONFIGURASI SUPABASE ANDA ---
     const SUPABASE_URL = 'https://vnvxknlpwjquzbmrzaju.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_fyxNidWq9fkGExXJNzad_w_V-_-XV-b'; 
     
@@ -377,231 +380,59 @@
         document.getElementById('tabelNonParfum').innerHTML = htmlNP;
     }
 
-        function exportExcel() {
-        let toko = document.getElementById('namaToko').value || 'Toko';
-        let tgl = document.getElementById('tanggal').value || '-';
-
-        let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
-
-        // Menggunakan format XML Spreadsheet Excel agar styling border dikenali sempurna di PC & HP
-        let xmlContent = `
-        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-         xmlns:o="urn:schemas-microsoft-com:office:office"
-         xmlns:x="urn:schemas-microsoft-com:office:excel"
-         xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-         xmlns:html="http://www.w3.org/TR/REC-html40">
-         <Styles>
-          <Style ss:ID="Default" ss:Name="Normal">
-           <Alignment ss:Vertical="Bottom"/>
-           <Borders/>
-           <Font ss:FontName="Arial" ss:Size="11"/>
-           <Interior/>
-           <NumberFormat/>
-           <Protection/>
-          </Style>
-          <Style ss:ID="HeaderTitle">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Font ss:FontName="Arial" ss:Size="14" ss:Bold="1"/>
-          </Style>
-          <Style ss:ID="SubInfo">
-           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1"/>
-          </Style>
-          <Style ss:ID="NoteText">
-           <Font ss:FontName="Arial" ss:Size="10" ss:Italic="1" ss:Color="#B71C1C"/>
-          </Style>
-          <Style ss:ID="TableTitle">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1" ss:Color="#B71C1C"/>
-           <Interior ss:Color="#FFEBEE" ss:Pattern="Solid"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-          <Style ss:ID="ThCol">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1"/>
-           <Interior ss:Color="#F0F0F0" ss:Pattern="Solid"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-          <Style ss:ID="CellData">
-           <Alignment ss:Vertical="Center"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-          <Style ss:ID="CellCenter">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     function exportExcel() {
         let toko = document.getElementById('namaToko').value || 'Toko';
         let tgl = document.getElementById('tanggal').value || '-';
 
-        let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
+        let aoa = [
+            ["", "FORMAT ORDERAN BARANG", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["Nama Toko", ": " + toko, "", "", "", "", ""],
+            ["Tanggal", ": " + tgl, "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang."],
+            ["", "", "", "", "", "", ""],
+            ["Orderan Parfum", "", "", "", "Orderan Non Parfum", "", ""],
+            ["No", "Nama Barang", "Qty", "", "No", "Nama Barang", "Qty"]
+        ];
 
-        let xmlContent = `
-        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-         xmlns:o="urn:schemas-microsoft-com:office:office"
-         xmlns:x="urn:schemas-microsoft-com:office:excel"
-         xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-         xmlns:html="http://www.w3.org/TR/REC-html40">
-         <Styles>
-          <Style ss:ID="Default" ss:Name="Normal">
-           <Alignment ss:Vertical="Bottom"/>
-           <Borders/>
-           <Font ss:FontName="Arial" ss:Size="11"/>
-           <Interior/>
-           <NumberFormat/>
-           <Protection/>
-          </Style>
-          <Style ss:ID="HeaderTitle">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Font ss:FontName="Arial" ss:Size="14" ss:Bold="1"/>
-          </Style>
-          <Style ss:ID="SubInfo">
-           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1"/>
-          </Style>
-          <Style ss:ID="NoteText">
-           <Font ss:FontName="Arial" ss:Size="10" ss:Italic="1" ss:Color="#B71C1C"/>
-          </Style>
-          <Style ss:ID="TableTitle">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1" ss:Color="#B71C1C"/>
-           <Interior ss:Color="#FFEBEE" ss:Pattern="Solid"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-          <Style ss:ID="ThCol">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Font ss:FontName="Arial" ss:Size="11" ss:Bold="1"/>
-           <Interior ss:Color="#F0F0F0" ss:Pattern="Solid"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-          <Style ss:ID="CellData">
-           <Alignment ss:Vertical="Center"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-          <Style ss:ID="CellCenter">
-           <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-           <Borders>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-           </Borders>
-          </Style>
-         </Styles>
-         <Worksheet ss:Name="Orderan">
-          <Table>
-           <Column ss:Width="35"/>
-           <Column ss:Width="220"/>
-           <Column ss:Width="50"/>
-           <Column ss:Width="25"/>
-           <Column ss:Width="35"/>
-           <Column ss:Width="220"/>
-           <Column ss:Width="50"/>
-           
-           <Row>
-            <Cell ss:Index="2" ss:StyleID="HeaderTitle" ss:MergeAcross="1"><Data ss:Type="String">FORMAT ORDERAN BARANG</Data></Cell>
-           </Row>
-           <Row></Row>
-           <Row>
-            <Cell ss:Index="1" ss:StyleID="SubInfo"><Data ss:Type="String">Nama Toko</Data></Cell>
-            <Cell ss:StyleID="SubInfo"><Data ss:Type="String">: ${toko}</Data></Cell>
-           </Row>
-           <Row>
-            <Cell ss:Index="1" ss:StyleID="SubInfo"><Data ss:Type="String">Tanggal</Data></Cell>
-            <Cell ss:StyleID="SubInfo"><Data ss:Type="String">: ${tgl}</Data></Cell>
-           </Row>
-           <Row></Row>
-           <Row>
-            <Cell ss:Index="1" ss:StyleID="NoteText" ss:MergeAcross="6"><Data ss:Type="String">Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang.</Data></Cell>
-           </Row>
-           <Row></Row>
-           <Row>
-            <Cell ss:Index="1" ss:StyleID="TableTitle" ss:MergeAcross="2"><Data ss:Type="String">Orderan Parfum</Data></Cell>
-            <Cell></Cell>
-            <Cell ss:StyleID="TableTitle" ss:MergeAcross="2"><Data ss:Type="String">Orderan Non Parfum</Data></Cell>
-           </Row>
-           <Row>
-            <Cell ss:StyleID="ThCol"><Data ss:Type="String">No</Data></Cell>
-            <Cell ss:StyleID="ThCol"><Data ss:Type="String">Nama Barang</Data></Cell>
-            <Cell ss:StyleID="ThCol"><Data ss:Type="String">Qty</Data></Cell>
-            <Cell></Cell>
-            <Cell ss:StyleID="ThCol"><Data ss:Type="String">No</Data></Cell>
-            <Cell ss:StyleID="ThCol"><Data ss:Type="String">Nama Barang</Data></Cell>
-            <Cell ss:StyleID="ThCol"><Data ss:Type="String">Qty</Data></Cell>
-           </Row>
-        `;
+        let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 35);
 
         for (let i = 0; i < totalBaris; i++) {
             let p = dataParfum[i] || { nama: "", qty: "" };
-            let np = dataNonParfum[i] || { nama: "", qty: "" };
+            let np = dataNonPartum || dataNonParfum[i] || { nama: "", qty: "" };
             
-            let noP = (i < 35 || p.nama !== "") ? (i + 1) : "";
-            let noNP = (i < 35 || np.nama !== "") ? (i + 1) : "";
-
-            let valP = p.nama ? escapeXml(p.nama) : "";
-            let valQtyP = p.qty ? p.qty : "";
-            let valNP = np.nama ? escapeXml(np.nama) : "";
-            let valQtyNP = np.qty ? np.qty : "";
-
-            xmlContent += `
-           <Row>
-            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${noP}</Data></Cell>
-            <Cell ss:StyleID="CellData"><Data ss:Type="String">${valP}</Data></Cell>
-            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${valQtyP}</Data></Cell>
-            <Cell></Cell>
-            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${noNP}</Data></Cell>
-            <Cell ss:StyleID="CellData"><Data ss:Type="String">${valNP}</Data></Cell>
-            <Cell ss:StyleID="CellCenter"><Data ss:Type="String">${valQtyNP}</Data></Cell>
-           </Row>
-            `;
+            aoa.push([
+                p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
+                p.nama,
+                p.qty,
+                "",
+                np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 35 ? i + 1 : ""),
+                np.nama,
+                np.qty
+            ]);
         }
 
-        xmlContent += `
-          </Table>
-         </Worksheet>
-        </Workbook>
-        `;
+        let ws = XLSX.utils.aoa_to_sheet(aoa);
 
-        let blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
-        let url = URL.createObjectURL(blob);
-        let a = document.createElement('a');
-        a.href = url;
-        a.download = `orderan_${toko}_(${tgl}).xls`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        // Mengaktifkan Gridlines standar SheetJS agar garis bantu Excel langsung tampil
+        if(!ws['!views']) ws['!views'] = [{ showGridLines: true }];
+
+        ws['!cols'] = [
+            { wch: 5 },  
+            { wch: 32 }, 
+            { wch: 8 },  
+            { wch: 4 },  
+            { wch: 5 },  
+            { wch: 32 }, 
+            { wch: 8 }   
+        ];
+
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Orderan");
+
+        XLSX.writeFile(wb, `orderan_${toko}_(${tgl}).xlsx`);
     }
-
-
 </script>
 
 </body>
