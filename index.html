@@ -1,0 +1,247 @@
+<script>
+    // --- MASUKKAN URL & ANON KEY ANDA DI SINI ---
+    const SUPABASE_URL = 'https://vnvxknlpwjquzbmrzaju.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_fyxNidWq9fkGExXJNzad_w_V-_-XV-b'; 
+    
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let semuaBarangMaster = [];
+    let dataParfum = [];
+    let dataNonParfum = [];
+
+    window.onload = async function() {
+        muatDataPenyimpanan();
+        await ambilDatabaseSupabase();
+    };
+
+    async function ambilDatabaseSupabase() {
+        let statusEl = document.getElementById('dbStatusText');
+        try {
+            let { data, error } = await _supabase.from('master_barang').select('*');
+            
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                semuaBarangMaster = data;
+                statusEl.innerHTML = `☁️ Terhubung ke Database Online (${data.length} Item Barang)`;
+                statusEl.style.color = "#15803d";
+            } else {
+                statusEl.innerHTML = `⚠️ Database online di Supabase masih kosong.`;
+            }
+        } catch (err) {
+            console.error(err);
+            statusEl.innerHTML = `❌ Gagal mengambil data dari Supabase.`;
+            statusEl.style.color = "#dc2626";
+        }
+    }
+
+    function simpanOtomatis() {
+        let toko = document.getElementById('namaToko').value;
+        let tgl = document.getElementById('tanggal').value;
+
+        let saveData = {
+            toko: toko,
+            tanggal: tgl,
+            parfum: dataParfum,
+            nonparfum: dataNonParfum
+        };
+
+        localStorage.setItem('storeReportDraft', JSON.stringify(saveData));
+        
+        let status = document.getElementById('saveStatus');
+        status.innerText = "💾 Tersimpan Otomatis";
+        setTimeout(() => { status.innerText = "💾 Auto-saved"; }, 1500);
+    }
+
+    function muatDataPenyimpanan() {
+        let saved = localStorage.getItem('storeReportDraft');
+        if (saved) {
+            try {
+                let parsed = JSON.parse(saved);
+                document.getElementById('namaToko').value = parsed.toko || "Cibaduyut";
+                document.getElementById('tanggal').value = parsed.tanggal || "16 Oktober 2026";
+                dataParfum = parsed.parfum || [];
+                dataNonParfum = parsed.nonparfum || [];
+            } catch(e) {
+                console.error("Gagal memuat memori lokal");
+            }
+        }
+        renderUI();
+    }
+
+    function resetDataBaru() {
+        if(confirm("Yakin ingin menghapus semua data untuk membuat laporan baru?")) {
+            localStorage.removeItem('storeReportDraft');
+            dataParfum = [];
+            dataNonParfum = [];
+            document.getElementById('namaToko').value = "Cibaduyut";
+            document.getElementById('tanggal').value = "16 Oktober 2026";
+            renderUI();
+            alert("Data direset bersih.");
+        }
+    }
+
+    function tampilkanSaran(keyword) {
+        let sugestDiv = document.getElementById('sugestList');
+
+        if (!keyword.trim() || semuaBarangMaster.length === 0) {
+            sugestDiv.style.display = 'none';
+            return;
+        }
+
+        let hasilFilter = semuaBarangMaster.filter(item => {
+            let nama = item.nama_barang ? String(item.nama_barang) : '';
+            return nama.toLowerCase().includes(keyword.toLowerCase());
+        });
+
+        if (hasilFilter.length === 0) {
+            sugestDiv.style.display = 'none';
+            return;
+        }
+
+        let html = '';
+        hasilFilter.forEach(item => {
+            let nama = item.nama_barang;
+            let kat = item.kategori || '';
+            html += `<div class="sugest-item" onclick="pilihSaran('${nama}', '${kat}')">${nama} <span style="color:#666; font-size:10px;">(${kat})</span></div>`;
+        });
+
+        sugestDiv.innerHTML = html;
+        sugestDiv.style.display = 'block';
+    }
+
+    function pilihSaran(nama, kategoriSupabase) {
+        document.getElementById('inputCariBarang').value = nama;
+        
+        let selectKat = document.getElementById('kategori');
+        let katLower = kategoriSupabase.toLowerCase();
+        if (katLower.includes('non')) {
+            selectKat.value = 'nonparfum';
+        } else if (katLower.includes('parfum')) {
+            selectKat.value = 'parfum';
+        }
+
+        document.getElementById('sugestList').style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.form-group')) {
+            document.getElementById('sugestList').style.display = 'none';
+        }
+    });
+
+    function tambahItem() {
+        let kategori = document.getElementById('kategori').value;
+        let nama = document.getElementById('inputCariBarang').value;
+        let qty = document.getElementById('qty').value;
+
+        if(!nama || !qty) {
+            alert('Nama barang dan Qty wajib diisi!');
+            return;
+        }
+
+        if(kategori === 'parfum') {
+            dataParfum.push({ nama, qty });
+        } else {
+            dataNonParfum.push({ nama, qty });
+        }
+
+        document.getElementById('inputCariBarang').value = '';
+        document.getElementById('qty').value = '';
+        renderUI();
+        simpanOtomatis();
+    }
+
+    function hapusItem(kategori, index) {
+        if(kategori === 'parfum') {
+            dataParfum.splice(index, 1);
+        } else {
+            dataNonParfum.splice(index, 1);
+        }
+        renderUI();
+        simpanOtomatis();
+    }
+
+    function renderUI() {
+        let htmlP = '';
+        if(dataParfum.length === 0) {
+            htmlP = `<tr><td colspan="4" style="text-align:center; color:#777;">Belum ada item</td></tr>`;
+        } else {
+            dataParfum.forEach((item, idx) => {
+                htmlP += `<tr>
+                    <td class="col-no">${idx + 1}</td>
+                    <td>${item.nama}</td>
+                    <td class="col-qty">${item.qty}</td>
+                    <td style="text-align:center;"><button class="del-btn" onclick="hapusItem('parfum', ${idx})">Hapus</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('tabelParfum').innerHTML = htmlP;
+
+        let htmlNP = '';
+        if(dataNonParfum.length === 0) {
+            htmlNP = `<tr><td colspan="4" style="text-align:center; color:#777;">Belum ada item</td></tr>`;
+        } else {
+            dataNonParfum.forEach((item, idx) => {
+                htmlNP += `<tr>
+                    <td class="col-no">${idx + 1}</td>
+                    <td>${item.nama}</td>
+                    <td class="col-qty">${item.qty}</td>
+                    <td style="text-align:center;"><button class="del-btn" onclick="hapusItem('nonparfum', ${idx})">Hapus</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('tabelNonParfum').innerHTML = htmlNP;
+    }
+
+    function exportExcel() {
+        let toko = document.getElementById('namaToko').value || 'Toko';
+        let tgl = document.getElementById('tanggal').value || '-';
+
+        let aoa = [
+            ["", "FORMAT ORDERAN BARANG", "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["Nama Toko", ": " + toko, "", "", "", "", ""],
+            ["Tanggal", ": " + tgl, "", "", "", "", ""],
+            ["", "", "", "", "", "", ""],
+            ["Mohon Untuk Menggunakan Nama Villa Sesuai Surat Jalan/Data Base Dalam Penulisan Nama Barang."],
+            ["", "", "", "", "", "", ""],
+            ["Orderan Parfum", "", "", "", "Orderan Non Parfum", "", ""],
+            ["No", "Nama Barang", "Qty", "", "No", "Nama Barang", "Qty"]
+        ];
+
+        let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, 30);
+
+        for (let i = 0; i < totalBaris; i++) {
+            let p = dataParfum[i] || { nama: "", qty: "" };
+            let np = dataNonParfum[i] || { nama: "", qty: "" };
+            
+            aoa.push([
+                p.nama !== "" || i < dataParfum.length ? (i + 1) : (i < 30 ? i + 1 : ""),
+                p.nama,
+                p.qty,
+                "",
+                np.nama !== "" || i < dataNonParfum.length ? (i + 1) : (i < 30 ? i + 1 : ""),
+                np.nama,
+                np.qty
+            ]);
+        }
+
+        let ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        ws['!cols'] = [
+            { wch: 5 },  
+            { wch: 32 }, 
+            { wch: 8 },  
+            { wch: 4 },  
+            { wch: 5 },  
+            { wch: 32 }, 
+            { wch: 8 }   
+        ];
+
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Orderan");
+
+        XLSX.writeFile(wb, `orderan_${toko}_(${tgl}).xlsx`);
+    }
+</script>
