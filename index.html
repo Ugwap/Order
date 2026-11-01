@@ -42,6 +42,9 @@
         th { background: #f0f0f0; text-align: center; }
         .col-no { width: 40px; text-align: center; }
         .col-qty { width: 60px; text-align: center; }
+        /* Nama barang di tabel selalu tampil KAPITAL, apa pun cara mengetiknya.
+           Hanya tampilan; data yang tersimpan tetap seperti yang diketik. */
+        .col-nama { text-transform: uppercase; }
         
         .input-card { background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #c8e6c9; }
         .input-card h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--primary); }
@@ -356,7 +359,7 @@
             dataParfum.forEach((item, idx) => {
                 htmlP += `<tr>
                     <td class="col-no">${idx + 1}</td>
-                    <td>${item.nama}</td>
+                    <td class="col-nama">${item.nama}</td>
                     <td class="col-qty">${item.qty}</td>
                     <td style="text-align:center;"><button class="del-btn" onclick="hapusItem('parfum', ${idx})">Hapus</button></td>
                 </tr>`;
@@ -371,13 +374,19 @@
             dataNonParfum.forEach((item, idx) => {
                 htmlNP += `<tr>
                     <td class="col-no">${idx + 1}</td>
-                    <td>${item.nama}</td>
+                    <td class="col-nama">${item.nama}</td>
                     <td class="col-qty">${item.qty}</td>
                     <td style="text-align:center;"><button class="del-btn" onclick="hapusItem('nonparfum', ${idx})">Hapus</button></td>
                 </tr>`;
             });
         }
         document.getElementById('tabelNonParfum').innerHTML = htmlNP;
+    }
+
+    // Nama barang di file Excel selalu KAPITAL, sama seperti tampilan di tabel.
+    // Data yang tersimpan tetap seperti yang diketik (tidak diubah).
+    function namaKapital(nama) {
+        return String(nama === null || nama === undefined ? '' : nama).toUpperCase();
     }
 
     // --- Fungsi Export Excel Menggunakan template.xlsx ---
@@ -605,12 +614,12 @@
 
                 // Kolom Parfum (A = No, B = Nama Barang, C = Qty)
                 setCellNumber(ws, r, 1, adaP ? i + 1 : null);
-                setCellText(ws, r, 2, p ? p.nama : "");
+                setCellText(ws, r, 2, p ? namaKapital(p.nama) : "");
                 setCellNumber(ws, r, 3, adaP && p ? p.qty : null);
 
                 // Kolom Non Parfum (F = No, G = Nama Barang, H = Qty)
                 setCellNumber(ws, r, 6, adaNP ? i + 1 : null);
-                setCellText(ws, r, 7, np ? np.nama : "");
+                setCellText(ws, r, 7, np ? namaKapital(np.nama) : "");
                 setCellNumber(ws, r, 8, adaNP && np ? np.qty : null);
             }
 
