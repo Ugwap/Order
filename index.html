@@ -584,12 +584,20 @@
             ws.getCell('C11').value = null;
             ws.getCell('G11').value = null;
 
-            let totalBaris = Math.max(dataParfum.length, dataNonParfum.length, MIN_BARIS_DATA);
+            // Barang parfum diurutkan A-Z khusus untuk hasil Excel.
+            // Tampilan tabel di layar tetap mengikuti urutan input.
+            // `numeric: true` membuat nama seperti "Parfum 2" tetap di depan "Parfum 10".
+            let parfumUrut = dataParfum.slice().sort(function (a, b) {
+                return String(a.nama || '').localeCompare(
+                    String(b.nama || ''), 'id', { numeric: true, sensitivity: 'base' });
+            });
+
+            let totalBaris = Math.max(parfumUrut.length, dataNonParfum.length, MIN_BARIS_DATA);
 
             // Mengisi data tabel mulai dari baris ke-12 TANPA MERUSAK BORDER TEMPLATE
             for (let i = 0; i < totalBaris; i++) {
                 let r = BARIS_AWAL_DATA + i;
-                let p = dataParfum[i] || null;
+                let p = parfumUrut[i] || null;
                 let np = dataNonParfum[i] || null;
 
                 let adaP = i < MIN_BARIS_DATA || (p !== null && p.nama !== "");
