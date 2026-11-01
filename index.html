@@ -79,10 +79,12 @@
         }
 
         .btn-add { background: var(--accent); color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; height: 32px; }
-        .action-buttons { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-download { background: #15803d; color: white; border: none; padding: 12px; flex: 1; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .action-buttons { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .btn-download { background: #15803d; color: white; border: none; padding: 12px; flex: 1; min-width: 150px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-share { background: #25D366; color: #063a1b; border: none; padding: 12px; flex: 1; min-width: 150px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .btn-reset { background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 0.95rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .btn-download:active, .btn-reset:active { transform: scale(0.98); }
+        .btn-download:active, .btn-share:active, .btn-reset:active { transform: scale(0.98); }
+        .btn-share:disabled, .btn-download:disabled { opacity: 0.6; cursor: wait; }
         .del-btn { background: #dc2626; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; }
         
         .autosave-status { font-size: 0.75rem; color: #15803d; text-align: right; margin-bottom: 5px; font-weight: bold; }
@@ -177,6 +179,9 @@
     <div class="action-buttons">
         <button class="btn-download" onclick="exportExcel()">
             📊 Download File Excel
+        </button>
+        <button class="btn-share" id="btnShareExcel" onclick="shareExcel()" title="Buat file Excel lalu kirim lewat WhatsApp">
+            📲 Share ke WhatsApp
         </button>
         <button class="btn-reset" onclick="resetDataBaru()" title="Hapus semua data untuk laporan baru">
             🗑️ Reset Data
@@ -560,76 +565,132 @@
         return bytes.buffer;
     }
 
-    async function exportExcel() {
+    // Tipe MIME file Excel (.xlsx), dipakai untuk Blob/File.
+    const TIPE_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    // Membuat file Excel dari template. Tidak menyimpan/membagikan apa pun;
+    // dipakai bersama oleh tombol Download dan tombol Share.
+    async function buatFileExcel() {
         let toko = document.getElementById('namaToko').value.trim() || 'Toko';
         let tgl = document.getElementById('tanggal').value.trim() || '-';
 
         if (typeof ExcelJS === 'undefined') {
-            alert("Library ExcelJS gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
-            return;
+            throw new Error("Library ExcelJS gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
         }
 
+        let arrayBuffer = await ambilTemplateExcel();
+        let wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(arrayBuffer);
+        let ws = wb.worksheets[0];
+
+        // Sinkronisasi Nama Toko (B3) dan Tanggal (B4).
+        // Label A3/A4 sudah mengandung ":", jadi B3/B4 hanya diisi nilainya.
+        ws.getCell('B3').value = toko;
+        ws.getCell('B4').value = tgl;
+
+        // Hapus sisa data contoh pada baris pemisah ke-11 (C11 dan G11)
+        ws.getCell('C11').value = null;
+        ws.getCell('G11').value = null;
+
+        // Barang parfum diurutkan A-Z khusus untuk hasil Excel.
+        // Tampilan tabel di layar tetap mengikuti urutan input.
+        // `numeric: true` membuat nama seperti "Parfum 2" tetap di depan "Parfum 10".
+        let parfumUrut = dataParfum.slice().sort(function (a, b) {
+            return String(a.nama || '').localeCompare(
+                String(b.nama || ''), 'id', { numeric: true, sensitivity: 'base' });
+        });
+
+        let totalBaris = Math.max(parfumUrut.length, dataNonParfum.length, MIN_BARIS_DATA);
+
+        // Mengisi data tabel mulai dari baris ke-12 TANPA MERUSAK BORDER TEMPLATE
+        for (let i = 0; i < totalBaris; i++) {
+            let r = BARIS_AWAL_DATA + i;
+            let p = parfumUrut[i] || null;
+            let np = dataNonParfum[i] || null;
+
+            let adaP = i < MIN_BARIS_DATA || (p !== null && p.nama !== "");
+            let adaNP = i < MIN_BARIS_DATA || (np !== null && np.nama !== "");
+
+            // Kolom Parfum (A = No, B = Nama Barang, C = Qty)
+            setCellNumber(ws, r, 1, adaP ? i + 1 : null);
+            setCellText(ws, r, 2, p ? p.nama : "");
+            setCellNumber(ws, r, 3, adaP && p ? p.qty : null);
+
+            // Kolom Non Parfum (F = No, G = Nama Barang, H = Qty)
+            setCellNumber(ws, r, 6, adaNP ? i + 1 : null);
+            setCellText(ws, r, 7, np ? np.nama : "");
+            setCellNumber(ws, r, 8, adaNP && np ? np.qty : null);
+        }
+
+        // Bersihkan karakter yang tidak valid untuk nama file
+        let namaFile = `orderan_${toko}_(${tgl}).xlsx`.replace(/[\\/:*?"<>|]/g, '-');
+        let buffer = await wb.xlsx.writeBuffer();
+
+        return { buffer: buffer, namaFile: namaFile, toko: toko, tgl: tgl };
+    }
+
+    // Unduh file Excel seperti biasa (dipakai tombol Download dan fallback Share).
+    function simpanFileExcel(buffer, namaFile) {
+        let blob = new Blob([buffer], { type: TIPE_XLSX });
+        let url = URL.createObjectURL(blob);
+        let link = document.createElement('a');
+        link.href = url;
+        link.download = namaFile;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+
+    async function exportExcel() {
+        let tombol = document.querySelector('.btn-download');
+        if (tombol) tombol.disabled = true;
         try {
-            let arrayBuffer = await ambilTemplateExcel();
-            let wb = new ExcelJS.Workbook();
-            await wb.xlsx.load(arrayBuffer);
-            let ws = wb.worksheets[0];
-
-            // Sinkronisasi Nama Toko (B3) dan Tanggal (B4).
-            // Label A3/A4 sudah mengandung ":", jadi B3/B4 hanya diisi nilainya.
-            ws.getCell('B3').value = toko;
-            ws.getCell('B4').value = tgl;
-
-            // Hapus sisa data contoh pada baris pemisah ke-11 (C11 dan G11)
-            ws.getCell('C11').value = null;
-            ws.getCell('G11').value = null;
-
-            // Barang parfum diurutkan A-Z khusus untuk hasil Excel.
-            // Tampilan tabel di layar tetap mengikuti urutan input.
-            // `numeric: true` membuat nama seperti "Parfum 2" tetap di depan "Parfum 10".
-            let parfumUrut = dataParfum.slice().sort(function (a, b) {
-                return String(a.nama || '').localeCompare(
-                    String(b.nama || ''), 'id', { numeric: true, sensitivity: 'base' });
-            });
-
-            let totalBaris = Math.max(parfumUrut.length, dataNonParfum.length, MIN_BARIS_DATA);
-
-            // Mengisi data tabel mulai dari baris ke-12 TANPA MERUSAK BORDER TEMPLATE
-            for (let i = 0; i < totalBaris; i++) {
-                let r = BARIS_AWAL_DATA + i;
-                let p = parfumUrut[i] || null;
-                let np = dataNonParfum[i] || null;
-
-                let adaP = i < MIN_BARIS_DATA || (p !== null && p.nama !== "");
-                let adaNP = i < MIN_BARIS_DATA || (np !== null && np.nama !== "");
-
-                // Kolom Parfum (A = No, B = Nama Barang, C = Qty)
-                setCellNumber(ws, r, 1, adaP ? i + 1 : null);
-                setCellText(ws, r, 2, p ? p.nama : "");
-                setCellNumber(ws, r, 3, adaP && p ? p.qty : null);
-
-                // Kolom Non Parfum (F = No, G = Nama Barang, H = Qty)
-                setCellNumber(ws, r, 6, adaNP ? i + 1 : null);
-                setCellText(ws, r, 7, np ? np.nama : "");
-                setCellNumber(ws, r, 8, adaNP && np ? np.qty : null);
-            }
-
-            // Bersihkan karakter yang tidak valid untuk nama file
-            let namaFile = `orderan_${toko}_(${tgl}).xlsx`.replace(/[\\/:*?"<>|]/g, '-');
-            let buffer = await wb.xlsx.writeBuffer();
-            let blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            let url = URL.createObjectURL(blob);
-            let link = document.createElement('a');
-            link.href = url;
-            link.download = namaFile;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-
+            let hasil = await buatFileExcel();
+            simpanFileExcel(hasil.buffer, hasil.namaFile);
         } catch (err) {
             console.error(err);
-            alert("Gagal membuat file Excel. Pastikan template.xlsx ada di folder yang sama dengan index.html.");
+            alert(err && err.message ? err.message
+                : "Gagal membuat file Excel. Pastikan template.xlsx ada di folder yang sama dengan index.html.");
+        } finally {
+            if (tombol) tombol.disabled = false;
+        }
+    }
+
+    // Buat file Excel lalu buka share sheet Android (WhatsApp ada di situ).
+    async function shareExcel() {
+        let tombol = document.getElementById('btnShareExcel');
+        if (tombol) tombol.disabled = true;
+
+        try {
+            let hasil = await buatFileExcel();
+            let file = new File([hasil.buffer], hasil.namaFile, { type: TIPE_XLSX });
+
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Orderan ' + hasil.toko,
+                        text: 'File orderan ' + hasil.toko + ' tanggal ' + hasil.tgl
+                    });
+                    return;
+                } catch (err) {
+                    // User menutup share sheet: bukan error.
+                    if (err && err.name === 'AbortError') return;
+                    console.error(err);
+                }
+            }
+
+            // Browser tidak mendukung/tidak mengizinkan share file:
+            // tetap berikan file lewat unduhan supaya tidak ada data yang hilang.
+            simpanFileExcel(hasil.buffer, hasil.namaFile);
+            alert("Share langsung tidak tersedia di browser ini. File Excel sudah diunduh, silakan kirim manual lewat WhatsApp.");
+        } catch (err) {
+            console.error(err);
+            alert(err && err.message ? err.message
+                : "Gagal membuat file Excel. Pastikan template.xlsx ada di folder yang sama dengan index.html.");
+        } finally {
+            if (tombol) tombol.disabled = false;
         }
     }
 
